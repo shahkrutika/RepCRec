@@ -5,6 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.swing.plaf.SliderUI;
 
 public class RepCRecTest {
 
@@ -13,19 +18,66 @@ public class RepCRecTest {
    * @throws IOException 
    */
   public static void main(String[] args) throws IOException {
+    String operationType = null;
+    int transactionId = 0;
+    String trans = null;
+    String variable = null;
+    Integer value = 0;
+    Integer siteId = 0;
+    Instruction instruction;
     FileReader fileReader = new FileReader("Test1");
+    String[] splitTransactionId;
     BufferedReader bufferedReader = new BufferedReader(fileReader);   
     Scanner scanInputFile = new Scanner(bufferedReader);
-    while(scanInputFile.hasNext()) {
-      //System.out.println(scanInputFile.next());
+    Pattern p = Pattern.compile("[\\)\\(\\,;]+");
+    Pattern findOperationType = Pattern.compile("[a-zA-Z]+");
+    Pattern findTransaction = Pattern.compile("T[0-9]");
+    Pattern findTransactionId = Pattern.compile("T");
+    Pattern findVariable = Pattern.compile("x[0-9]+");
+    Pattern findValue = Pattern.compile("[0-9]+"); 
+    Matcher m ;
+    
+    while(scanInputFile.hasNext()) {  
+      operationType = null;
+      transactionId = 0;
+      variable = null;
+      value = 0;
+      siteId = 0;
       String str = scanInputFile.next();
-      Scanner scanstr = new Scanner(str);
-    //  Instruction i = new Instruction();
+      String[] splitEachInstruction = p.split(str);
+      for(String eachItem : splitEachInstruction) {
+        if(findOperationType.matcher(eachItem).matches()) 
+          operationType = eachItem;
+        
+        else if(findTransaction.matcher(eachItem).matches()) {
+          
+          String[] q = findTransactionId.split(eachItem);
+          transactionId = Integer.parseInt(q[1]);
+        } 
+        else if(findVariable.matcher(eachItem).matches())
+          variable = eachItem;
+        else if(findValue.matcher(eachItem).matches()) {
+          if(operationType.equals("dump") || operationType.equals("fail") || 
+              operationType.equals("recover")) 
+            siteId = Integer.parseInt(eachItem);
+          else
+            value = Integer.parseInt(eachItem)  ;
+      }
+     
+       
+      }
+      instruction = 
+        new Instruction(operationType, transactionId, variable, value,siteId);
+    
+     }
+     
+    } 
+     
+    }
       
-      scanstr.useDelimiter("\\(");
-      System.out.println(scanstr.next());
-   //   System.out.println(scanstr.next());
-}
-  }
+      
+      
+      
+ 
+  
 
-}
