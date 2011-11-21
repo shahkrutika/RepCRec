@@ -6,7 +6,9 @@ public enum Operations {
   beginRO,
   R,
   W,
-  dump,
+  dump(),
+  dump(i),
+  dump(xj),
   end,
   fail,
   recover;

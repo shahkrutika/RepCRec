@@ -15,12 +15,12 @@ public class Instruction {
     this.variable = variable;
     this.value = value;
     i=i+1;
-    System.out.println(" i - " + i +
+   /* System.out.println(" i - " + i +
         " operation - " +operationType +
                        " transactin id - " +transactionId +
                          " variable - " + variable +
                          " value - " + value +
-                         " site id - " + siteId );
+                         " site id - " + siteId );*/
   }
   
 }

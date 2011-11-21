@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -18,6 +19,9 @@ public class RepCRecTest {
    * @throws IOException 
    */
   public static void main(String[] args) throws IOException {
+   
+    TransactionManager transactionManager = new TransactionManager();
+    Site site = new Site();
     String operationType = null;
     int transactionId = 0;
     String trans = null;
@@ -25,6 +29,26 @@ public class RepCRecTest {
     Integer value = 0;
     Integer siteId = 0;
     Instruction instruction;
+    
+    for(Integer i = 1; i <= 10; i++) {
+      if(i % 2 == 0)
+        site = new EvenSite(i);
+      else
+        site = new OddSite(i);       
+    }
+ /*   EvenSite e = null;
+    OddSite o = null;
+    for(Integer i = 1; i <= 5; i++) {
+      site = site.availableSites.get(i);
+      if (site instanceof EvenSite) {
+        e = (EvenSite) site;
+        System.out.println(e.variables.toString());
+      }
+      else{
+         o = (OddSite)site;
+      System.out.println(o.variables.toString());
+       }
+    }*/
     FileReader fileReader = new FileReader("Test1");
     String[] splitTransactionId;
     BufferedReader bufferedReader = new BufferedReader(fileReader);   
@@ -36,7 +60,6 @@ public class RepCRecTest {
     Pattern findVariable = Pattern.compile("x[0-9]+");
     Pattern findValue = Pattern.compile("[0-9]+"); 
     Matcher m ;
-    
     while(scanInputFile.hasNext()) {  
       operationType = null;
       transactionId = 0;
@@ -68,11 +91,11 @@ public class RepCRecTest {
       }
       instruction = 
         new Instruction(operationType, transactionId, variable, value,siteId);
-    
+      transactionManager.executeTransaction(instruction);
      }
      
     } 
-     
+ 
     }
       
       
