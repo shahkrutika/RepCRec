@@ -5,7 +5,12 @@ import java.util.Map;
 
 public class OddSite extends Site {
   
-  public Map<String,Integer> variables = new HashMap<String,Integer>();
+  public OddSite(int id) {
+		super(id);
+		// TODO Auto-generated constructor stub
+	}
+
+public Map<String,Integer> variables = new HashMap<String,Integer>();
   
   
   /**
@@ -13,6 +18,8 @@ public class OddSite extends Site {
    * each with an initial value of 10*i where i is the variable number
    * @param Id is the Id of the site
    */
+  
+  /*
   public OddSite(Integer Id) {
     String key;
     this.id = Id;
@@ -25,5 +32,7 @@ public class OddSite extends Site {
     availableSites.put(Id, this);
   
   }
+  
+  */
 
 }

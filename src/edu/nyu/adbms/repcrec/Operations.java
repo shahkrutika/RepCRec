@@ -2,7 +2,7 @@ package edu.nyu.adbms.repcrec;
 
 public enum Operations {
   
-  begin,
+  /*begin,
   beginRO,
   R,
   W,
@@ -12,5 +12,5 @@ public enum Operations {
   end,
   fail,
   recover;
-
+*/
 }
