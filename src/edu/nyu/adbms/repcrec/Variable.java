@@ -1,27 +1,41 @@
 package edu.nyu.adbms.repcrec;
 
-class Transaction {
-	
-}
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class Variable {
 	String name;
-	int currentValue;
-	int lastCommittedValue;
-	boolean isLocked;
+	int value;
+	//int lastCommittedValue;
+	//boolean isLocked;
+	//boolean hasSharedLock;
+	boolean hasExclusiveLock;
+	boolean isObsolete;
 	Transaction owner;
+	List<Transaction> sharedOwners; 
 	
 	public Variable(String name, int initValue) {
 		this.name = name;
-		this.currentValue = initValue;
-		this.lastCommittedValue = initValue;
-		this.isLocked = false;
+		this.value = initValue;
+	//	this.lastCommittedValue = initValue;
+		//this.isLocked = false;
+		//this.hasSharedLock = false;
+		this.hasExclusiveLock =false;
+		
+		//for write lock
 		this.owner = null;
+		
+    //for shared locks
+		this.sharedOwners = new ArrayList<Transaction>();
+		
+		
+		
 	}
 	
 	public boolean lockVariable(Transaction t) {
 		try {
-			this.isLocked = true;
+	//		this.isLocked = true;
 			this.owner = t;
 			return true;
 		} catch(Exception e) {
@@ -29,7 +43,7 @@ public class Variable {
 		}
 	}
 	
-	public boolean isTransactionAuthorizedForWrite(Transaction t) {
+	/*public boolean isTransactionAuthorizedForWrite(Transaction t) {
 		if (this.isLocked == true) {
 			if (this.owner.hashCode() == t.hashCode())
 				return true;
@@ -38,7 +52,7 @@ public class Variable {
 		} else {
 			return false;
 		}
-	}
+	}*/
 	
 	
 }

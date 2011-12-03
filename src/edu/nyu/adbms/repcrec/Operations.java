@@ -2,15 +2,15 @@ package edu.nyu.adbms.repcrec;
 
 public enum Operations {
   
-  /*begin,
+  begin,
   beginRO,
   R,
   W,
-  dump(),
-  dump(i),
-  dump(xj),
+  dump,
+  //dump(i),
+  //dump(xj),
   end,
   fail,
   recover;
-*/
+
 }
