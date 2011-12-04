@@ -144,7 +144,7 @@ public class SiteManager {
 	      String var = transaction.getCurrentInstruction().getVariable();
 	      for(Integer i =1 ;i<=sitesInt.size();i++) {
 	        Site site = sitesInt.get(i);
-	        if(site.dataLockManager.volatileMemory.containsValue(var) && site.isAvailable) {
+	        if(site.dataLockManager.volatileMemory.containsKey(var) && site.isAvailable) {
 	        Variable v = site.dataLockManager.volatileMemory.get(var);
 	        v.value = transaction.getCurrentInstruction().getValue();
 	        v.owner = transaction;
@@ -152,14 +152,37 @@ public class SiteManager {
 	      }
 	      }
 	    }
-	    return (result);	    
+	    //release locks on all variables on all sites whic have owner/shared lock as T 
+	    else if(result == -1) {
+	       for(Integer i =1 ;i<=sitesInt.size();i++) {
+	          Site site = sitesInt.get(i);
+	          if(site.isAvailable) {
+	            for (Variable var : site.dataLockManager.volatileMemory.values()) {
+	              if(var.owner != null) {
+	               if (var.owner.equals(transaction)) {
+	                 var.owner=null;
+	                 var.hasExclusiveLock = false;
+	                 var.sharedOwners.remove(transaction);
+	               }
+	          }
+	            }
+	        
+	      }
+	    }
+	  }
+	     return (result);      
+
 	  }
 	  
 	  else if(curInst.getOperationType().equals("end")) {
 	    for(Integer i = 1; i<=sitesInt.size(); i++) {
 	      Site site = sitesInt.get(i);
-	      site.dataLockManager.end(transaction);
+	      if(site.isAvailable) {
+	     // site.dataLockManager.end(transaction);
+	      site.end(transaction);
+	      }
 	    }
+	    return 55;
 	  }
 	  
 	  else if(curInst.getOperationType().equals("dump")) {
@@ -232,19 +255,25 @@ public class SiteManager {
 	}
 	
 	
-	public void dump() {
+	public int dump() {
     for (int i=1;i<=sitesInt.size();i++){
       Site site = sitesInt.get(i);
       if (site.isAvailable){
-      for (Variable var : site.dataLockManager.stableStorage.values())
+   //   for (Variable var : site.dataLockManager.stableStorage.values())
+        for(int k = 1;k<=20;k++)
       {
-        System.out.println("Site: " +i+ " variable "+var.name+" = "+var.value);
+          String name = "x"+k;
+          if(site.dataLockManager.stableStorage.containsKey(name)) {
+          Variable v = site.dataLockManager.stableStorage.get(name);
+        System.out.println("Site: " +i+ " variable "+v.name+" = "+v.value);
+      }
       }
       }
       else{
         System.out.println("Site: "+i+" is down");
       }
     }
+    return 1;
   }
 	
 	public void dump(String xj){

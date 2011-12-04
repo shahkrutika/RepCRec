@@ -1,5 +1,6 @@
 package edu.nyu.adbms.repcrec;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 import javax.print.attribute.standard.DateTimeAtCreation;
@@ -10,15 +11,28 @@ public class Transaction {
   private Integer id;
   private boolean isReadOnly;
   private Instruction currentInstruction;
-  private Date creationTime;
+  private long creationTime;
+  private Timestamp timestamp;
+  
+  
 
-  public Date getCreationTime() {
+  public Timestamp getTimestamp() {
+    return timestamp;
+  }
+
+
+  public void setTimestamp(Timestamp timestamp) {
+    this.timestamp = timestamp;
+  }
+
+
+  public long getCreationTime() {
     return creationTime;
   }
 
 
-  public void setCreationTime(Date creationTime) {
-    this.creationTime = creationTime;
+  public void setCreationTime(long t) {
+    this.creationTime = t;
   }
 
 

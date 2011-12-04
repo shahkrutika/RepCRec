@@ -39,14 +39,17 @@ public class TransactionManager {
       transaction = new Transaction(instruction.getTransactionId(), false);
 //      siteManager.assignSites(transaction);
       Date d = new Date();
-      transaction.setCreationTime(d);
-      transactions.put(instruction.getTransactionId(), transaction);
+     // transaction.setCreationTime(d);
+      long t = d.getTime();
+      transaction.setCreationTime(t); 
+       transactions.put(instruction.getTransactionId(), transaction);
     }
     else if(instruction.getOperationType().equals("beginRO")) {
       transaction = new Transaction(instruction.getTransactionId(), true);
   //    siteManager.assignSites(transaction);
       Date d = new Date();
-      transaction.setCreationTime(d);
+      long t = d.getTime();
+      transaction.setCreationTime(t);
       transactions.put(instruction.getTransactionId(), transaction);
     }
     else if(instruction.getOperationType().equals("R")) {
@@ -69,11 +72,14 @@ public class TransactionManager {
       transaction.setCurrentInstruction(instruction);
       siteManager.assignSites(transaction);
       int result = siteManager.executeInstruction(transaction);
-      if(result == 2) {
+      if(result == 2 && !blockedQueue.contains(transaction)) {
         blockedQueue.add(transaction);
       } 
       else if(result == -1) {
         //abort
+        System.out.println("Transaction " +transaction.getId()+ " aborted because no lock" +
+        		"on variable " +instruction.getVariable() + " could be obtained" );
+        
         transactions.remove(transaction);
         blockedQueue.remove(transaction);
       }
@@ -83,14 +89,14 @@ public class TransactionManager {
       transaction = transactions.get(instruction.getTransactionId());
       transaction.setCurrentInstruction(instruction);
       siteManager.assignSites(transaction);
-      int result = siteManager.executeInstruction(transaction);
+      return (siteManager.executeInstruction(transaction));
 
     }
     
     else if(instruction.getOperationType().equals("dump")) {
       transaction.setCurrentInstruction(instruction);
 
-      if(instruction.getSiteId() != 0) {
+      if(instruction.getSiteId() != null) {
         siteManager.assignSites(transaction);
         siteManager.executeInstruction(transaction);
       }
@@ -98,7 +104,7 @@ public class TransactionManager {
         siteManager.dump(instruction.getVariable());
       }
       else {
-        siteManager.dump();
+        return (siteManager.dump());
       }
 
     }

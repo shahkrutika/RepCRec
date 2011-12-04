@@ -53,7 +53,7 @@ public class Site {
 	    
 	  }
 	  
-	  public boolean end(Transaction T) {
+	  public int end(Transaction T) {
 	    return (this.dataLockManager.end(T));
 	    
 	  }

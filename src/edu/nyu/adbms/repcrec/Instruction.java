@@ -7,12 +7,15 @@ public class Instruction {
   private Integer value;
   private Integer siteId;
   private static int i=0;
+  
+  
   public Instruction(String operationType, Integer transactionId, String variable,
       Integer value, Integer siteId) {
     this.operationType = operationType;
     this.transactionId = transactionId;
     this.variable = variable;
     this.value = value;
+    //this.siteId = siteId;
     i=i+1;
     /*
    System.out.println(" i - " + i +

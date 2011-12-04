@@ -59,11 +59,8 @@ public class RepCRecTest {
               operationType.equals("recover")) 
             siteId = Integer.parseInt(eachItem);
           else
-            value = Integer.parseInt(eachItem)  ;
-      }
-        
-        
-
+            value = Integer.parseInt(eachItem);
+      }       
       }
       instruction = 
         new Instruction(operationType, transactionId, variable, value,siteId);
@@ -79,20 +76,27 @@ public class RepCRecTest {
        
      
      if(!transactionManager.getBlockedQueue().isEmpty()) {
-      System.out.println("in blocked Queue");
+    //  System.out.println("in blocked Queue");
        Transaction blockT = transactionManager.getBlockedQueue().get(0);
        int result = transactionManager.executeTransaction(blockT.getCurrentInstruction());
        if(result == 1) {
          transactionManager.getBlockedQueue().remove(0);
        }
-       
-    
-       
+       else if(result == 2) {
+         try {
+           int a = transactionManager.executeTransaction(allInstructions.get(st));
+           System.out.println(a);
+            }
+            catch (NullPointerException e) {
+              e.printStackTrace();
+            }
+            allInstructions.remove(0);         
+       }       
      }
      else {
        try {
       int a = transactionManager.executeTransaction(allInstructions.get(st));
-      System.out.println(a);
+      System.out.println("a = "+a);
        }
        catch (NullPointerException e) {
          e.printStackTrace();
