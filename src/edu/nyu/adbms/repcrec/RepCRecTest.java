@@ -3,6 +3,7 @@ package edu.nyu.adbms.repcrec;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -15,15 +16,16 @@ public class RepCRecTest {
   public static void main(String[] args) throws IOException {
    
     SiteManager siteManager = new SiteManager();
-    TransactionManager transactionManager = new TransactionManager(siteManager);
+    ArrayList<Instruction> allInstructions = new ArrayList<Instruction>();
 
+    TransactionManager transactionManager = new TransactionManager(siteManager,
+        allInstructions);
     String operationType = null;
     Integer transactionId = 0;
     String variable = null;
     Integer value = 0;
     Integer siteId = 0;
     Instruction instruction;
-    
     FileReader fileReader = new FileReader("Test1");
     BufferedReader bufferedReader = new BufferedReader(fileReader);   
     Scanner scanInputFile = new Scanner(bufferedReader);
@@ -64,13 +66,41 @@ public class RepCRecTest {
       }
       instruction = 
         new Instruction(operationType, transactionId, variable, value,siteId);
-      transactionManager.executeTransaction(instruction);
+     // transactionManager.executeTransaction(instruction);
+      allInstructions.add(instruction);
      }
+ 
+     //transactionManager.start();
+    int st = 0;
+    while(allInstructions.size() != 0 || transactionManager.getBlockedQueue().size() != 0) {
+       
+     
+     if(!transactionManager.getBlockedQueue().isEmpty()) {
+      
+       Transaction blockT = transactionManager.getBlockedQueue().get(0);
+       int result = transactionManager.executeTransaction(blockT.getCurrentInstruction());
+       if(result == 1) {
+         transactionManager.getBlockedQueue().remove(0);
+       }
+       
+    
+       
+     }
+     else {
+       try {
+      int a = transactionManager.executeTransaction(allInstructions.get(st));
+      System.out.println(a);
+       }
+       catch (NullPointerException e) {}
+       allInstructions.remove(0);
+     //  st++;
+      
      
     } 
  
     }
-      
+   }
+}
       
       
       

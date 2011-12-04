@@ -38,6 +38,10 @@ public class Instruction {
   public Integer getSiteId() {
     return siteId;
   }
+  
+  public void setSiteId(Integer siteId) {
+    this.siteId = siteId;
+  }
   public static int getI() {
     return i;
   }

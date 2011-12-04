@@ -1,16 +1,14 @@
 package edu.nyu.adbms.repcrec;
 
-import java.util.AbstractQueue;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Random;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class SiteManager {  
   
-  private Map<Site, Boolean> sites;
+ // private Map<Site, Boolean> sites;
 	private Map<Integer,Site> sitesInt;
 	private Site site;
 	private DataLockManager evenSiteDataLockManager;
@@ -21,7 +19,11 @@ public class SiteManager {
 	private Map<Transaction,Integer> siteTrasactionRel;
 	
 	
-	/*
+	public Map<Transaction, Integer> getSiteTrasactionRel() {
+    return siteTrasactionRel;
+  }
+
+  /*
 	 * The SiteManager (SM) is responsible for managing the sites. It assigns variables to each individual site.
 	 * It also keeps track of the current status of each site, whether it is down or up.
 	 * 
@@ -39,61 +41,85 @@ public class SiteManager {
 	 * 
 	 */
 	public SiteManager() {
-		this.sites = new HashMap<Site, Boolean>();
+//		this.sites = new HashMap<Site, Boolean>();
 		this.siteTrasactionRel = new HashMap<Transaction , Integer>();
 		this.sitesInt = new HashMap<Integer, Site>();
-		oddSiteDataLockManager = new DataLockManager();
-		evenSiteDataLockManager = new DataLockManager();
-		Variable v;
-		String name;
-		for(Integer i = 1; i <= 20; i++) {
-      if(i % 2 == 0) {
-        name = "x" + i;
-        v = new Variable(name, 10 * i);
-        //oddSiteDataLockManager.variables.put(name, v);  
-        oddSiteDataLockManager.stableStorage.put(name, v);
-      }
-    }
 		
-	  for(Integer i = 1; i <= 20; i++) {
-      name = "x" + i;
-      v = new Variable(name, 10 * i);
-      //evenSiteDataLockManager.variables.put(name, v);
-      evenSiteDataLockManager.volatileMemory.put(name, v);
-    }
+		for(Integer i = 1; i <=10 ; i++) {
+		  init(i);
+		}
 		
-		init();
 	}
 	
 	/*
 	 * In a real-life scenario, we would read a config file which describes the
 	 * resource allocation scheme for each site.
 	 */
-	private void init() {
+	private void init(Integer siteId) {
 	  
-	  for(Integer i = 1; i <= 10; i++) {
+	  oddSiteDataLockManager = new DataLockManager();
+    evenSiteDataLockManager = new DataLockManager();
+    Variable v;
+    //String name;
+    
+    if(siteId %2 != 0) {      
+    for(Integer i = 1; i <= 20; i++) {
       if(i % 2 == 0) {
-        site = new Site(i,evenSiteDataLockManager);
-        sites.put(site, true);
-        sitesInt.put(i, site);
+      String  name = "x" + i;
+        v = new Variable(name, 10 * i);
+        v.isObsolete = false;
+       // oddSiteDataLockManager.variables.put(name, v);  
+       oddSiteDataLockManager.stableStorage.put(name, v);
+       
+
       }
-      else {
-        site = new Site(i,oddSiteDataLockManager);
-        sites.put(site, true);
-        sitesInt.put(i, site);
-      }
-      
     }
+    site = new Site(siteId,oddSiteDataLockManager);
+
+    }
+    else {    
+    for(Integer i = 1; i <= 20; i++) {
+     String name = "x" + i;
+      v = new Variable(name, 10 * i);
+      v.isObsolete = false;
+      //evenSiteDataLockManager.variables.put(name, v);
+      evenSiteDataLockManager.stableStorage.put(name, v);
+    }
+    site = new Site(siteId,evenSiteDataLockManager);
+
+    }
+	 
+        //sites.put(site, true);
+        sitesInt.put(siteId, site);    
 	}
 	
 	
 	public void assignSites(Transaction T) {
 	  Site selectedSite;
-	  for(Integer i = 0; i<sitesInt.size(); i++) {
-	    selectedSite = sitesInt.get(i);
-	    if(selectedSite.isAvailable) {
-	      siteTrasactionRel.put(T, i);
+	  
+	  if(T.getCurrentInstruction().getOperationType().equals("dump")) {
+	    siteTrasactionRel.put(T, T.getCurrentInstruction().getSiteId());
+	  }
+	  
+	  else if (T.getCurrentInstruction().getOperationType().equalsIgnoreCase("end")){
+	    for(Integer i = 1; i<=sitesInt.size(); i++) {
+	      selectedSite = sitesInt.get(i);
+	      if(selectedSite.isAvailable) {
+	        T.getCurrentInstruction().setSiteId(selectedSite.id);
+	        siteTrasactionRel.put(T, i);
+	        break;
+	      }
 	    }
+	  }
+	  else {
+	  for(Integer i = 1; i<=sitesInt.size(); i++) {
+	    selectedSite = sitesInt.get(i);
+	    if(selectedSite.isAvailable && selectedSite.dataLockManager.stableStorage.containsKey(T.getCurrentInstruction().getVariable())) {
+	      T.getCurrentInstruction().setSiteId(selectedSite.id);
+	      siteTrasactionRel.put(T, i);
+	      break;
+	    }
+	  }
 	  }
 	}
 	
@@ -117,7 +143,112 @@ public class SiteManager {
 	    }
 	    return (result);	    
 	  }
+	  else if(curInst.getOperationType().equals("end")) {
+	    for(Integer i = 1; i<=sitesInt.size(); i++) {
+	      Site site = sitesInt.get(i);
+	      site.dataLockManager.end(transaction);
+	    }
+	  }
+	  
+	  else if(curInst.getOperationType().equals("dump")) {
+	    if(executingSite.isAvailable) {
+	       executingSite.dump(transaction);
+	    }
+	    else
+	      return 1; //failure
+	  }
+	  
+	  //else if(curInst.getOperationType().equals("fail")) {
+	    
+	   // fail();
 	//  return true;*/
 	  return 100;
-	} 
+	}
+	
+	public Set<Transaction> fail(Instruction curInst) {
+    Integer siteID = curInst.getSiteId();
+    Site failSite = sitesInt.get(siteID);
+    failSite.isAvailable = false;
+    for (Variable var : failSite.dataLockManager.volatileMemory.values()) {
+      var.value = -100;
+      var.hasExclusiveLock = false;
+      var.owner = null;
+      var.sharedOwners.remove(var);
+      var.isObsolete = true;
+      
+    }
+    //Map<Transaction, Integer> siteTransRel = .getSiteTrasactionRel();
+    Set<Transaction> keys = new HashSet<Transaction>();
+    for(Entry<Transaction, Integer> entry : siteTrasactionRel.entrySet()) {
+      
+      if(siteID ==  entry.getValue()) {
+        keys.add(entry.getKey());  //transactoin tat have to be aborted
+        
+      }
+    }
+    
+    for(Transaction T : keys) {
+      for(Integer s = 1;s<=sitesInt.size();s++) {
+        Site site = sitesInt.get(s);
+        if(site.isAvailable) {
+        DataLockManager dlm = site.dataLockManager;
+        for (Variable var : dlm.volatileMemory.values()) {
+          if(var.owner.equals(T)) {
+            var.owner = null;
+          }
+         // while(var.sharedOwners.contains(T)) {
+          var.sharedOwners.remove(T);
+         // }
+        }
+        }
+      }}
+    return keys;
+     // blockedQueue.remove(T);
+     // transactions.remove(T);
+    //  System.out.println("Transaction " +T.getId()+ " aborted since " +
+    //      "site " + instruction.getSiteId() + " failed");
+    }
+    
+   
+
+	public void recover(Integer id) {
+	  sitesInt.get(id).isAvailable = true;
+    for (Variable var : sitesInt.get(id).dataLockManager.stableStorage.values()) {
+      var.isObsolete = true;
+    }
+
+	}
+	
+	
+	public void dump() {
+    for (int i=1;i<=sitesInt.size();i++){
+      Site site = sitesInt.get(i);
+      if (site.isAvailable){
+      for (Variable var : site.dataLockManager.stableStorage.values())
+      {
+        System.out.println("Site: " +i+ " variable "+var.name+" = "+var.value);
+      }
+      }
+      else{
+        System.out.println("Site: "+i+" is down");
+      }
+    }
+  }
+	
+	public void dump(String xj){
+
+    //how to find whether xj is odd or even? 
+    for (int i=1;i<=sitesInt.size();i++){
+      Site site = sitesInt.get(i);
+      if (site.dataLockManager.stableStorage.containsKey(xj)){
+        if (site.isAvailable){
+          System.out.println("Site: " +i+ " value= " +site.dataLockManager.stableStorage.get(xj));
+        }
+        else{ 
+          System.out.println("Site: "+i+ " is down");
+        }
+      }
+    }
+  }
+
 }

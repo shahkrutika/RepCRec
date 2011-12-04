@@ -33,7 +33,7 @@ public class Variable {
 		
 	}
 	
-	public boolean lockVariable(Transaction t) {
+	/*public boolean lockVariable(Transaction t) {
 		try {
 	//		this.isLocked = true;
 			this.owner = t;
@@ -43,7 +43,7 @@ public class Variable {
 		}
 	}
 	
-	/*public boolean isTransactionAuthorizedForWrite(Transaction t) {
+	public boolean isTransactionAuthorizedForWrite(Transaction t) {
 		if (this.isLocked == true) {
 			if (this.owner.hashCode() == t.hashCode())
 				return true;

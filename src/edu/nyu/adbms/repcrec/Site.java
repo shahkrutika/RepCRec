@@ -1,7 +1,5 @@
 package edu.nyu.adbms.repcrec;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class Site {
   
@@ -21,10 +19,10 @@ public class Site {
 	public int R(Transaction T, boolean isReadOnly){
 	 String requestedVar = T.getCurrentInstruction().getVariable();
 	 Variable stableVar = this.dataLockManager.stableStorage.get(requestedVar);
-	 if(isReadOnly) {
+	 if(isReadOnly && !stableVar.isObsolete) {
 	   System.out.println("Transaction " + T.getId() + " read " +stableVar.name+
 	       " : " +stableVar.value);
-	   return 0; //readonly success
+	   return 1; //readonly success
 	   //add all sites down code
 	 }
 	 else {
@@ -54,11 +52,18 @@ public class Site {
 	    
 	  }
 	  
+	  public boolean end(Transaction T) {
+	    return (this.dataLockManager.end(T));
+	    
+	  }
 	  
+	  public boolean dump(Transaction T) {
+	    for (Variable var : this.dataLockManager.stableStorage.values())
+      {
+        System.out.println("Site: " +this.id+ " variable "+var.name+" = "+var.value);
+      }
+	    return true;
+	  }
 	
-	
-	
-	//public void read(Transaction T){}
-	//public void read(Transaction T){}
-	//public void read(Transaction T){}
+
 }

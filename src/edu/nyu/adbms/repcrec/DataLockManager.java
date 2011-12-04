@@ -13,6 +13,9 @@ public class DataLockManager {
   public DataLockManager() {
     volatileMemory = new HashMap<String, Variable>();
     stableStorage = new HashMap<String, Variable>();
+    //volatileMemory = new HashMap<Integer, Variable>();
+    //stableStorage = new HashMap<Integer, Variable>();
+ 
   }
   
   public int checkGrantSharedLock(Transaction T, Variable siteVar) {
@@ -52,6 +55,7 @@ public class DataLockManager {
     if(!siteVar.hasExclusiveLock) {
       siteVar.owner = T;
       siteVar.value = T.getCurrentInstruction().getValue();
+      siteVar.isObsolete = false;
       return 1; //sucess
     }
     else {
@@ -81,6 +85,20 @@ public class DataLockManager {
     //default
     return 10;
     }
-    
- 
-}
+  
+  public boolean end(Transaction T){
+    Variable vStableStorage;
+    for (Variable vVolatileMemory : volatileMemory.values()) {
+   // for(Integer i = 0; i<volatileMemory.size();i++) {
+     // Variable vVolatileMemory = volatileMemory.get(i);
+      if(vVolatileMemory.owner.equals(T)) {
+        vStableStorage = stableStorage.get(vVolatileMemory.name);
+        vStableStorage.value = vVolatileMemory.value;
+        vVolatileMemory.owner = null;
+      }
+      vVolatileMemory.sharedOwners.remove(T);
+        
+      }
+    return  true;
+    }
+  }
