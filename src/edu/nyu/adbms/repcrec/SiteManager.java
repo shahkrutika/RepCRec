@@ -59,7 +59,7 @@ public class SiteManager {
 	  
 	  oddSiteDataLockManager = new DataLockManager();
     evenSiteDataLockManager = new DataLockManager();
-    Variable v;
+    Variable v,volV;
     //String name;
     
     if(siteId %2 != 0) {      
@@ -67,10 +67,12 @@ public class SiteManager {
       if(i % 2 == 0) {
       String  name = "x" + i;
         v = new Variable(name, 10 * i);
+        volV = new Variable (name);
         v.isObsolete = false;
        // oddSiteDataLockManager.variables.put(name, v);  
        oddSiteDataLockManager.stableStorage.put(name, v);
-       
+       oddSiteDataLockManager.volatileMemory.put(name, volV);
+
 
       }
     }
@@ -81,9 +83,12 @@ public class SiteManager {
     for(Integer i = 1; i <= 20; i++) {
      String name = "x" + i;
       v = new Variable(name, 10 * i);
+      volV = new Variable (name);
       v.isObsolete = false;
       //evenSiteDataLockManager.variables.put(name, v);
       evenSiteDataLockManager.stableStorage.put(name, v);
+      evenSiteDataLockManager.volatileMemory.put(name, volV);
+
     }
     site = new Site(siteId,evenSiteDataLockManager);
 
@@ -131,18 +136,25 @@ public class SiteManager {
 	  if(curInst.getOperationType().equals("R")) {
 	    return (executingSite.R(transaction, transaction.isReadOnly()));	    
 	  }
+	  
+	  //write abort left
 	  else if(curInst.getOperationType().equals("W")) {
 	    int result = executingSite.W(transaction);
 	    if (result == 1) {
-	      for(Integer i =0 ;i<sitesInt.size();i++) {
+	      String var = transaction.getCurrentInstruction().getVariable();
+	      for(Integer i =1 ;i<=sitesInt.size();i++) {
 	        Site site = sitesInt.get(i);
-	        Variable v = site.dataLockManager
-	          .stableStorage.get(transaction.getCurrentInstruction().getVariable());
+	        if(site.dataLockManager.volatileMemory.containsValue(var) && site.isAvailable) {
+	        Variable v = site.dataLockManager.volatileMemory.get(var);
 	        v.value = transaction.getCurrentInstruction().getValue();
+	        v.owner = transaction;
+	        v.hasExclusiveLock = true;
+	      }
 	      }
 	    }
 	    return (result);	    
 	  }
+	  
 	  else if(curInst.getOperationType().equals("end")) {
 	    for(Integer i = 1; i<=sitesInt.size(); i++) {
 	      Site site = sitesInt.get(i);

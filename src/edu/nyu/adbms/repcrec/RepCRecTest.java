@@ -61,22 +61,25 @@ public class RepCRecTest {
           else
             value = Integer.parseInt(eachItem)  ;
       }
-     
-       
+        
+        
+
       }
       instruction = 
         new Instruction(operationType, transactionId, variable, value,siteId);
-     // transactionManager.executeTransaction(instruction);
       allInstructions.add(instruction);
+   
+     // transactionManager.executeTransaction(instruction);
      }
- 
+    
+   
      //transactionManager.start();
     int st = 0;
     while(allInstructions.size() != 0 || transactionManager.getBlockedQueue().size() != 0) {
        
      
      if(!transactionManager.getBlockedQueue().isEmpty()) {
-      
+      System.out.println("in blocked Queue");
        Transaction blockT = transactionManager.getBlockedQueue().get(0);
        int result = transactionManager.executeTransaction(blockT.getCurrentInstruction());
        if(result == 1) {
@@ -91,7 +94,9 @@ public class RepCRecTest {
       int a = transactionManager.executeTransaction(allInstructions.get(st));
       System.out.println(a);
        }
-       catch (NullPointerException e) {}
+       catch (NullPointerException e) {
+         e.printStackTrace();
+       }
        allInstructions.remove(0);
      //  st++;
       

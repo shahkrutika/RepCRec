@@ -54,8 +54,9 @@ public class DataLockManager {
   public int checkGrantWriteLock(Transaction T, Variable siteVar) {
     if(!siteVar.hasExclusiveLock) {
       siteVar.owner = T;
+      System.out.println("T" +T.getId()+ " has a Ex lock on " + siteVar.name);
       siteVar.value = T.getCurrentInstruction().getValue();
-      siteVar.isObsolete = false;
+      //siteVar.isObsolete = false;
       return 1; //sucess
     }
     else {
@@ -66,6 +67,11 @@ public class DataLockManager {
       }
       
       //abort
+      /**
+       * aborting the transaction, all the locks held by this T should be
+       * released from all data lock managers, remove transaction from 'transactions',
+       * shared owners and exclusive owners.
+       */
       else if(results < 0) {
         List<Variable> allVariables = new ArrayList<Variable>();
         allVariables = (ArrayList<Variable>)volatileMemory.values();
@@ -91,7 +97,7 @@ public class DataLockManager {
     for (Variable vVolatileMemory : volatileMemory.values()) {
    // for(Integer i = 0; i<volatileMemory.size();i++) {
      // Variable vVolatileMemory = volatileMemory.get(i);
-      if(vVolatileMemory.owner.equals(T)) {
+      if(vVolatileMemory.owner != null && vVolatileMemory.owner.equals(T)) {
         vStableStorage = stableStorage.get(vVolatileMemory.name);
         vStableStorage.value = vVolatileMemory.value;
         vVolatileMemory.owner = null;

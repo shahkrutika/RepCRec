@@ -12,6 +12,7 @@ public class Site {
 		this.id = id;
 		this.isAvailable = true;
 		dataLockManager = dmManager;
+		
 	}
 	
 	//read
@@ -39,12 +40,12 @@ public class Site {
 
 	public int W(Transaction T){
 	  String requestedVar = T.getCurrentInstruction().getVariable();
-	  Variable stableVar = this.dataLockManager.stableStorage.get(requestedVar);
+	  Variable volatileVar = this.dataLockManager.volatileMemory.get(requestedVar);
 
-	  int result = this.dataLockManager.checkGrantWriteLock(T, stableVar);
+	  int result = this.dataLockManager.checkGrantWriteLock(T, volatileVar);
 	  if(result == 1) {
-	    System.out.println("Transaction " + T.getId() + " wrote " +stableVar.name+
-          " : " +stableVar.value);
+	    System.out.println("Transaction " + T.getId() + " wrote " +volatileVar.name+
+          " : " +volatileVar.value);
      return 1; //read success
 	  }
 	  else 

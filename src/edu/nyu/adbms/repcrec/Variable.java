@@ -15,6 +15,16 @@ public class Variable {
 	Transaction owner;
 	List<Transaction> sharedOwners; 
 	
+	public Variable (String name){
+	  this.name=name;
+	  this.hasExclusiveLock =false;
+    //for write lock
+    this.owner = null;
+    //for shared locks
+    this.sharedOwners = new ArrayList<Transaction>();
+	  
+	}
+	
 	public Variable(String name, int initValue) {
 		this.name = name;
 		this.value = initValue;
