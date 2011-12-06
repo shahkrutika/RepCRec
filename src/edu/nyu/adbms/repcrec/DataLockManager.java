@@ -17,11 +17,25 @@ public class DataLockManager {
  
   }
   
-  public int checkGrantSharedLock(Transaction T, Variable siteVar) {
-    if(!siteVar.hasExclusiveLock && !siteVar.isObsolete) {
-      siteVar.sharedOwners.add(T);
+  public int checkGrantSharedLock(Transaction T, Variable siteVar, Variable sVar) {
+    
+    //can read!
+    if(!siteVar.hasExclusiveLock && !sVar.isObsolete) {
+      //System.out.println("T" +T.getId()+ " got an exclusinve lock on ");
+     // siteVar.sharedOwners.add(T);
       return 1; //read
     }
+    //for a just recovered site
+    else if(!siteVar.hasExclusiveLock && sVar.isObsolete) {
+      //can read only if the var is not replicated 
+      if(!siteVar.isReplicated) {
+       // siteVar.sharedOwners.add(T);
+        return 1;
+      }
+      return 4;
+      
+    }   
+    //block
     else {
       //int results = siteVar.owner.getCreationTime().compareTo( T.getCreationTime());
       long results = siteVar.owner.getCreationTime() - T.getCreationTime();
@@ -33,6 +47,8 @@ public class DataLockManager {
       //abort
       else if(results < 0) {
         for (Variable var : this.volatileMemory.values()) {
+          if(var.owner != null){
+
           //    for(int i = 0; i<allVariables.size();i++) { 
                // Variable v = allVariables.get(i);
                 if(var.owner.equals(T) || var.sharedOwners.contains(T)) {
@@ -40,10 +56,11 @@ public class DataLockManager {
                   var.sharedOwners.remove(T);
                 }
               }
-        if(siteVar.owner.equals(T)) {
-          siteVar.owner.equals(null);
-        }
+//        if(siteVar.owner.equals(T)) {
+ //         siteVar.owner.equals(null);
+ //       }
         return -1;
+      }
       }
     }
     //default
@@ -51,14 +68,40 @@ public class DataLockManager {
   }
 
   public int checkGrantWriteLock(Transaction T, Variable siteVar) {
-    if(!siteVar.hasExclusiveLock) {
-      siteVar.owner = T;
+    int flag =0;
+    if(!siteVar.hasExclusiveLock && siteVar.sharedOwners.isEmpty()) {
+     /* siteVar.owner = T;
       System.out.println("T" +T.getId()+ " has a Ex lock on " + siteVar.name);
       siteVar.value = T.getCurrentInstruction().getValue();
-      //siteVar.isObsolete = false;
+      siteVar.hasExclusiveLock = true;
+      //siteVar.isObsolete = false;*/
       return 1; //success
     }
     else {
+      if(siteVar.sharedOwners.size()==1){
+        if(siteVar.sharedOwners.get(0).getId().equals(T.getId()))
+        {
+        /*  siteVar.owner = T;
+          System.out.println("T" +T.getId()+ " has a Ex lock on " + siteVar.name);
+          siteVar.value = T.getCurrentInstruction().getValue();
+          siteVar.hasExclusiveLock = true;
+          //siteVar.isObsolete = false;*/
+          return 1; //success
+        }
+      }
+      else if (siteVar.sharedOwners.size()>1){
+        for (Transaction SO : siteVar.sharedOwners){
+          if(T.getCreationTime() > SO.getCreationTime()){
+            flag =1;
+          break;
+          }
+        }
+        if(flag==1)
+          return -1;
+        else
+          return 2;
+      }
+      else{
       long results = siteVar.owner.getCreationTime() - T.getCreationTime();
   //    System.out.println("result: "+results);
       //blocked
@@ -73,9 +116,11 @@ public class DataLockManager {
        * shared owners and exclusive owners.
        */
       else if(results < 0) {
+        return -1;
+
       //  List<Variable> allVariables = new ArrayList<Variable>(volatileMemory.values());
         //allVariables = (ArrayList<Variable>)volatileMemory.values();
-        for (Variable var : this.volatileMemory.values()) {
+      /*  for (Variable var : this.volatileMemory.values()) {
           if(var.owner != null){
           //    for(int i = 0; i<allVariables.size();i++) { 
                // Variable v = allVariables.get(i);
@@ -84,7 +129,7 @@ public class DataLockManager {
                   var.sharedOwners.remove(T);
                 }
               }
-        }
+        }*/
         /*for(int i = 0; i<allVariables.size();i++) { 
           Variable v = allVariables.get(i);
           if(v.owner.equals(T) || v.sharedOwners.contains(T)) {
@@ -95,7 +140,7 @@ public class DataLockManager {
        // if(siteVar.owner.equals(T)) {
          // siteVar.owner.equals(null);
         //}
-        return -1;
+      }
       }
     }
     //default
@@ -112,11 +157,13 @@ public class DataLockManager {
         vStableStorage.value = vVolatileMemory.value;
         vVolatileMemory.owner = null;
         vVolatileMemory.hasExclusiveLock = false;
+        vStableStorage.isObsolete = false;
       }
       if(vVolatileMemory.sharedOwners.contains(T)) {
       vVolatileMemory.sharedOwners.remove(T);
       }
       }
+
     return  55;
     }
   }

@@ -13,6 +13,7 @@ public class Variable {
 	boolean hasExclusiveLock;
 	boolean isObsolete;
 	Transaction owner;
+	boolean isReplicated;
 	List<Transaction> sharedOwners; 
 	
 	public Variable (String name){

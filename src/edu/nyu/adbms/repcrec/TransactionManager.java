@@ -1,11 +1,15 @@
 package edu.nyu.adbms.repcrec;
 
+import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.swing.plaf.SliderUI;
 
 
 public class TransactionManager {
@@ -32,16 +36,17 @@ public class TransactionManager {
    * instruction just read from the input file
    * 
    * @param instruction is the current instruction to be executed
+   * @throws InterruptedException 
    */
-  public int executeTransaction(Instruction instruction) {
-  
-    if(instruction.getOperationType().equals("begin")) {
+  public int executeTransaction(Instruction instruction)  {
+      if(instruction.getOperationType().equals("begin")) {
       transaction = new Transaction(instruction.getTransactionId(), false);
 //      siteManager.assignSites(transaction);
       Date d = new Date();
      // transaction.setCreationTime(d);
       long t = d.getTime();
-      transaction.setCreationTime(t); 
+  
+      transaction.setCreationTime(System.nanoTime()); 
        transactions.put(instruction.getTransactionId(), transaction);
     }
     else if(instruction.getOperationType().equals("beginRO")) {
@@ -62,8 +67,16 @@ public class TransactionManager {
       } 
       else if(result == -1) {
         //abort
-        transactions.remove(transaction);
+        Iterator<Instruction> iter  = allInstructions.iterator();
+        while(iter.hasNext()) {
+          Instruction i = iter.next();
+          if(i.getTransactionId().equals(transaction.getId()) ){
+            iter.remove();
+          }
+        }
+        transactions.remove(transaction.getId());
         blockedQueue.remove(transaction);
+        return 3;
       }
       return result;
     }
@@ -77,11 +90,25 @@ public class TransactionManager {
       } 
       else if(result == -1) {
         //abort
-        System.out.println("Transaction " +transaction.getId()+ " aborted because no lock" +
+        System.out.println("Transaction " +transaction.getId()+ " aborted because no lock " +
         		"on variable " +instruction.getVariable() + " could be obtained" );
-        
-        transactions.remove(transaction);
+      //  for(Instruction inst : allInstructions) {
+/*          Instruction tempInst = allInstructions.get(l);
+          if (tempInst.getTransactionId() == transaction.getId()) {
+            allInstructions.remove(l);
+          }
+              
+  */
+        Iterator<Instruction> iter  = allInstructions.iterator();
+        while(iter.hasNext()) {
+          Instruction i = iter.next();
+          if(i.getTransactionId().equals(transaction.getId()) ){
+            iter.remove();
+          }
+        }
+        transactions.remove(transaction.getId());
         blockedQueue.remove(transaction);
+        return 3;
       }
       return result;
     }
@@ -89,16 +116,18 @@ public class TransactionManager {
       transaction = transactions.get(instruction.getTransactionId());
       transaction.setCurrentInstruction(instruction);
       siteManager.assignSites(transaction);
-      return (siteManager.executeInstruction(transaction));
+      int r = siteManager.executeInstruction(transaction);
+        System.out.println("T" +transaction.getId()+ "committed successfully");
+      return r;
 
     }
     
     else if(instruction.getOperationType().equals("dump")) {
       transaction.setCurrentInstruction(instruction);
 
-      if(instruction.getSiteId() != null) {
-        siteManager.assignSites(transaction);
-        siteManager.executeInstruction(transaction);
+      //all v at all sites
+      if(instruction.getDumpId() != 0) {
+       // siteManager.assignSites(transaction);
       }
       else if(instruction.getVariable() != null) {
         siteManager.dump(instruction.getVariable());
@@ -110,19 +139,27 @@ public class TransactionManager {
     }
     
     else if(instruction.getOperationType().equals("fail")) {
-      //transaction.setCurrentInstruction(instruction);
+      transaction.setCurrentInstruction(instruction);
       //siteManager.executeInstruction(transaction);
-      Set<Transaction> result = siteManager.fail(instruction);
+      Set<Transaction> result = siteManager.fail(transaction);
       for(Transaction t : result) {
-        transactions.remove(t);
+        transactions.remove(t.getId());
         blockedQueue.remove(t);
         System.out.println("Transaction " +t.getId()+ " aborted since " +
-            "site " + instruction.getSiteId() + " failed");
+            "site " + instruction.getFailId() + " failed");
+      
+      Iterator<Instruction> iter  = allInstructions.iterator();
+      while(iter.hasNext()) {
+        Instruction i = iter.next();
+        if(i.getTransactionId().equals(t.getId()) ){
+          iter.remove();
+        }
+        }
       }
    }
     
     else if(instruction.getOperationType().equals("recover")) {
-      siteManager.recover(instruction.getSiteId());
+      siteManager.recover(instruction.getRecoverId());
     }
     return 0;
   }

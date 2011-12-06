@@ -6,15 +6,21 @@ public class Instruction {
   private String variable;
   private Integer value;
   private Integer siteId;
+  private Integer failId;
+  private Integer recoverId;
+  public Integer dumpId;
   private static int i=0;
   
   
   public Instruction(String operationType, Integer transactionId, String variable,
-      Integer value, Integer siteId) {
+      Integer value, Integer siteId,Integer failId, Integer recoverId,Integer dumpId) {
     this.operationType = operationType;
     this.transactionId = transactionId;
     this.variable = variable;
     this.value = value;
+    this.failId = failId;
+    this.recoverId = recoverId;
+    this.dumpId = dumpId;
     //this.siteId = siteId;
     i=i+1;
     /*
@@ -26,6 +32,21 @@ public class Instruction {
                          " site id - " + siteId );*/
   }
   
+
+  public Integer getDumpId() {
+    return dumpId;
+  }
+
+
+  public Integer getRecoverId() {
+    return recoverId;
+  }
+
+
+  public Integer getFailId() {
+    return failId;
+  }
+
 
   public String getOperationType() {
     return operationType;

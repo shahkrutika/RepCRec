@@ -61,7 +61,7 @@ public class SiteManager {
     evenSiteDataLockManager = new DataLockManager();
     Variable v,volV;
     //String name;
-    
+    //odd : even
     if(siteId %2 != 0) {      
     for(Integer i = 1; i <= 20; i++) {
       if(i % 2 == 0) {
@@ -79,16 +79,28 @@ public class SiteManager {
     site = new Site(siteId,oddSiteDataLockManager);
 
     }
+    //even : even + 2odd
     else {    
     for(Integer i = 1; i <= 20; i++) {
+      if(i % 2 == 0 || siteId == 1 + i % 10) {
+        
      String name = "x" + i;
       v = new Variable(name, 10 * i);
       volV = new Variable (name);
+      if(siteId == 1 + i % 10) {
+        v.isReplicated = false;
+        volV.isReplicated = false;
+      }
+      else {
+        v.isReplicated = true;
+        volV.isReplicated = true;
+      }
+        
       v.isObsolete = false;
       //evenSiteDataLockManager.variables.put(name, v);
       evenSiteDataLockManager.stableStorage.put(name, v);
       evenSiteDataLockManager.volatileMemory.put(name, volV);
-
+      }
     }
     site = new Site(siteId,evenSiteDataLockManager);
 
@@ -134,9 +146,64 @@ public class SiteManager {
 	  Integer siteId = siteTrasactionRel.get(transaction);
 	  Site executingSite = sitesInt.get(siteId);
 	  if(curInst.getOperationType().equals("R")) {
-	    return (executingSite.R(transaction, transaction.isReadOnly()));	    
+	     int result = (executingSite.R(transaction, transaction.isReadOnly()));
+	     //broadcast new shared owner on all sites
+	     if (result == 1) {
+	       for(Integer i =1 ;i<=sitesInt.size();i++) {
+	          Site site = sitesInt.get(i);
+	          if(site.dataLockManager.volatileMemory.containsKey(curInst.getVariable()) && site.isAvailable) {
+	          Variable v = site.dataLockManager.volatileMemory.get(curInst.getVariable());
+	          v.sharedOwners.add(transaction);
+	     }
+	    
 	  }
-	  
+	     }
+	     //look for a site whose isobsolete is false
+	     else if (result == 4) {
+	       for(Integer i =1 ;i<=sitesInt.size();i++) {
+           Site site = sitesInt.get(i);
+           if(site.isAvailable) {
+           Variable vi = site.dataLockManager.stableStorage.get(curInst.getVariable());
+           if(!vi.isObsolete) {
+             result = site.R(transaction, transaction.isReadOnly());
+             if (result==1)
+               break;
+           }
+           }
+	       }
+	       if (result == 1) {
+	         for(Integer i =1 ;i<=sitesInt.size();i++) {
+	            Site site = sitesInt.get(i);
+	            if(site.dataLockManager.volatileMemory.containsKey(curInst.getVariable()) && site.isAvailable) {
+	            Variable v = site.dataLockManager.volatileMemory.get(curInst.getVariable());
+	            v.sharedOwners.add(transaction);
+	       }
+	    }
+	       }
+	       
+	     }
+	     
+	     else if(result == -1){
+	       System.out.println("site aborting" );
+	       for(Integer i =1 ;i<=sitesInt.size();i++) {
+           Site site = sitesInt.get(i);
+           if(site.isAvailable) {
+             for (Variable var : site.dataLockManager.volatileMemory.values()) {
+               if(var.owner != null) {
+                if (var.owner.equals(transaction)) {
+                  var.owner=null;
+                  var.hasExclusiveLock = false;
+                  var.sharedOwners.remove(transaction);
+                }
+           }
+             }
+         
+       }
+	       
+	     }
+	     }
+	     return result;
+	  }
 	  //write abort left
 	  else if(curInst.getOperationType().equals("W")) {
 	    int result = executingSite.W(transaction);
@@ -186,8 +253,10 @@ public class SiteManager {
 	  }
 	  
 	  else if(curInst.getOperationType().equals("dump")) {
-	    if(executingSite.isAvailable) {
-	       executingSite.dump(transaction);
+	    Integer tempsiteid = transaction.getCurrentInstruction().getDumpId();
+	    if(this.sitesInt.get(tempsiteid).isAvailable) {
+	      Site executeDump = sitesInt.get(tempsiteid);
+	       executeDump.dump(transaction);
 	    }
 	    else
 	      return 1; //failure
@@ -200,23 +269,24 @@ public class SiteManager {
 	  return 100;
 	}
 	
-	public Set<Transaction> fail(Instruction curInst) {
-    Integer siteID = curInst.getSiteId();
-    Site failSite = sitesInt.get(siteID);
+	public Set<Transaction> fail(Transaction transaction) {
+  //  Integer failID = curInst.getFailId();
+	  Integer failID = transaction.getCurrentInstruction().getFailId();
+    Site failSite = sitesInt.get(failID);
     failSite.isAvailable = false;
     for (Variable var : failSite.dataLockManager.volatileMemory.values()) {
-      var.value = -100;
+//      var.value = -100;
       var.hasExclusiveLock = false;
       var.owner = null;
-      var.sharedOwners.remove(var);
-      var.isObsolete = true;
+      var.sharedOwners.remove(transaction);
+//      var.isObsolete = true;
       
     }
     //Map<Transaction, Integer> siteTransRel = .getSiteTrasactionRel();
     Set<Transaction> keys = new HashSet<Transaction>();
     for(Entry<Transaction, Integer> entry : siteTrasactionRel.entrySet()) {
       
-      if(siteID ==  entry.getValue()) {
+      if(failID ==  entry.getValue()) {
         keys.add(entry.getKey());  //transactoin tat have to be aborted
         
       }
@@ -228,7 +298,8 @@ public class SiteManager {
         if(site.isAvailable) {
         DataLockManager dlm = site.dataLockManager;
         for (Variable var : dlm.volatileMemory.values()) {
-          if(var.owner.equals(T)) {
+          var.hasExclusiveLock = false;
+          if(var.owner!= null && var.owner.equals(T)) {
             var.owner = null;
           }
          // while(var.sharedOwners.contains(T)) {
@@ -283,7 +354,7 @@ public class SiteManager {
       Site site = sitesInt.get(i);
       if (site.dataLockManager.stableStorage.containsKey(xj)){
         if (site.isAvailable){
-          System.out.println("Site: " +i+ " value= " +site.dataLockManager.stableStorage.get(xj));
+          System.out.println("Site: " +i+ " value= " +site.dataLockManager.stableStorage.get(xj).value);
         }
         else{ 
           System.out.println("Site: "+i+ " is down");
