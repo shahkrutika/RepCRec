@@ -114,11 +114,11 @@ public class SiteManager {
 	public void assignSites(Transaction T) {
 	  Site selectedSite;
 	  
-	  if(T.getCurrentInstruction().getOperationType().equals("dump")) {
-	    siteTrasactionRel.put(T, T.getCurrentInstruction().getSiteId());
-	  }
+	//  if(T.getCurrentInstruction().getOperationType().equals("dump")) {
+	  //  siteTrasactionRel.put(T, T.getCurrentInstruction().getSiteId());
+	 // }
 	  
-	  else if (T.getCurrentInstruction().getOperationType().equalsIgnoreCase("end")){
+	  if (T.getCurrentInstruction().getOperationType().equalsIgnoreCase("end")){
 	    for(Integer i = 1; i<=sitesInt.size(); i++) {
 	      selectedSite = sitesInt.get(i);
 	      if(selectedSite.isAvailable) {
@@ -137,6 +137,8 @@ public class SiteManager {
 	      break;
 	    }
 	  }
+	  
+	  
 	  }
 	}
 	
@@ -274,23 +276,40 @@ public class SiteManager {
 	  Integer failID = transaction.getCurrentInstruction().getFailId();
     Site failSite = sitesInt.get(failID);
     failSite.isAvailable = false;
+    Set<Transaction> keys = new HashSet<Transaction>();
     for (Variable var : failSite.dataLockManager.volatileMemory.values()) {
 //      var.value = -100;
+      if(var.owner!=null && !keys.contains(transaction))
+        keys.add(var.owner);
       var.hasExclusiveLock = false;
       var.owner = null;
-      var.sharedOwners.remove(transaction);
+      if(var.sharedOwners.contains(transaction) && !keys.contains(transaction)){
+        keys.add(transaction);
+        var.sharedOwners.remove(transaction);
+      }
 //      var.isObsolete = true;
       
+      /*else{
+        
+        for (Integer s = 1; s <= sitesInt.size(); s++){
+          Site allS = sitesInt.get(s);
+          if (allS.isAvailable){
+            
+          }
+          
+        }
+      }*/
     }
+    
+    
     //Map<Transaction, Integer> siteTransRel = .getSiteTrasactionRel();
-    Set<Transaction> keys = new HashSet<Transaction>();
-    for(Entry<Transaction, Integer> entry : siteTrasactionRel.entrySet()) {
+   /* for(Entry<Transaction, Integer> entry : siteTrasactionRel.entrySet()) {
       
       if(failID ==  entry.getValue()) {
         keys.add(entry.getKey());  //transactoin tat have to be aborted
         
       }
-    }
+    }*/
     
     for(Transaction T : keys) {
       for(Integer s = 1;s<=sitesInt.size();s++) {
