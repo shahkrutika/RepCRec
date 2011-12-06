@@ -5,7 +5,6 @@ public class Site {
   
 	int id;
 	boolean isAvailable;
-//	List<Variable> variables = new ArrayList<Variable>();
 	DataLockManager dataLockManager;
 	
 	public Site(int id, DataLockManager dmManager) {

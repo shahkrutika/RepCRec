@@ -28,8 +28,7 @@ public class TransactionManager {
     this.allInstructions = allInstructions;
     
   }
-  
-  
+   
 
   /**
    * executeTransaction selects a randomly chosen available site to execute the
@@ -43,7 +42,6 @@ public class TransactionManager {
       transaction = new Transaction(instruction.getTransactionId(), false);
 //      siteManager.assignSites(transaction);
       Date d = new Date();
-     // transaction.setCreationTime(d);
       long t = d.getTime();
   
       transaction.setCreationTime(System.nanoTime()); 
@@ -62,7 +60,7 @@ public class TransactionManager {
       transaction.setCurrentInstruction(instruction);
       siteManager.assignSites(transaction);
       int result = siteManager.executeInstruction(transaction); 
-      if(result == 2) {
+      if(result == 2 && !blockedQueue.contains(transaction)) {
         blockedQueue.add(transaction);
       } 
       else if(result == -1) {
